@@ -2,21 +2,21 @@
 seeds = false
 skip-lint = false
 
-[programs.localnet]
-cardinal_stake_pool = "73QM3VFNvtS2k5KJ3zH8RvkR4ri9gQaE1f4t1dnPNmSA"
-cardinal_reward_distributor = "E2z64E5B64qvpsbArf9AE3m8vhAazqXh4FmiRKp1aKSt"
-cardinal_receipt_manager = "EmMEf6vBxFhyeDR6Q8BXNB3734LxufxEE8JbUMmiSPGC"
+# [programs.localnet]
+# cardinal_stake_pool = "73QM3VFNvtS2k5KJ3zH8RvkR4ri9gQaE1f4t1dnPNmSA"
+# cardinal_reward_distributor = "E2z64E5B64qvpsbArf9AE3m8vhAazqXh4FmiRKp1aKSt"
+# cardinal_receipt_manager = "EmMEf6vBxFhyeDR6Q8BXNB3734LxufxEE8JbUMmiSPGC"
 [programs.devnet]
-cardinal_stake_pool = "73QM3VFNvtS2k5KJ3zH8RvkR4ri9gQaE1f4t1dnPNmSA"
-cardinal_reward_distributor = "E2z64E5B64qvpsbArf9AE3m8vhAazqXh4FmiRKp1aKSt"
-cardinal_receipt_manager = "EmMEf6vBxFhyeDR6Q8BXNB3734LxufxEE8JbUMmiSPGC"
+cardinal_stake_pool = "HwsGL8M4DkT6AXfqWoZdfxjGciXM5zd4Uu5SMVfXppLP"
+cardinal_reward_distributor = "DhDgRvjF6bDm4t26XBnDvob37Q64jd9WTAFhLcvGUqxT"
+cardinal_receipt_manager = "2mM1m3qcpKLV62BfnL9hy8pNnLFGEpWZDL4iEsQpdxZG"
 
 [scripts]
 test-local = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/tests.ts"
 
 [provider]
 cluster = "devnet"
-wallet = "/home/bamdad/.config/solana/id.json"
+wallet = "/home/bamdad/devnet.json"
 
 # [programs.mainnet]
 # cardinal_stake_pool = "stkBL96RZkjY5ine4TvPihGqW8UHJfch2cokjAPzV8i"
