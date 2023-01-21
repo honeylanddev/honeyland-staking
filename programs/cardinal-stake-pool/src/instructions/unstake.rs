@@ -99,6 +99,12 @@ pub fn handler(ctx: Context<UnstakeCtx>) -> Result<()> {
     stake_entry.cooldown_start_seconds = None;
     stake_pool.total_staked = stake_pool.total_staked.checked_sub(1).expect("Sub error");
     stake_entry.kind = StakeEntryKind::Permissionless as u8;
-
+    let clock: Clock = Clock::get().unwrap();
+    emit!(StakeOrUnstakeEvent {
+        authority: ctx.accounts.user.key().to_string(),
+        entity_mint: ctx.accounts.original_mint.key().to_string(),
+        event_type: String::from("UnStake"),
+        time_stamp: clock.unix_timestamp
+    });
     Ok(())
 }

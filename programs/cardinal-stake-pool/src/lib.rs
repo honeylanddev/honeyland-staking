@@ -4,7 +4,7 @@ pub mod state;
 
 use {anchor_lang::prelude::*, instructions::*};
 
-declare_id!("stkBL96RZkjY5ine4TvPihGqW8UHJfch2cokjAPzV8i");
+declare_id!("73QM3VFNvtS2k5KJ3zH8RvkR4ri9gQaE1f4t1dnPNmSA");
 
 #[program]
 pub mod cardinal_stake_pool {
@@ -22,25 +22,25 @@ pub mod cardinal_stake_pool {
         init_entry::handler(ctx, user)
     }
 
-    pub fn init_stake_mint(ctx: Context<InitStakeMintCtx>, ix: InitStakeMintIx) -> Result<()> {
-        init_stake_mint::handler(ctx, ix)
-    }
+    // pub fn init_stake_mint(ctx: Context<InitStakeMintCtx>, ix: InitStakeMintIx) -> Result<()> {
+    //     init_stake_mint::handler(ctx, ix)
+    // }
 
-    pub fn authorize_mint(ctx: Context<AuthorizeMintCtx>, mint: Pubkey) -> Result<()> {
-        authorize_mint::handler(ctx, mint)
-    }
+    // pub fn authorize_mint(ctx: Context<AuthorizeMintCtx>, mint: Pubkey) -> Result<()> {
+    //     authorize_mint::handler(ctx, mint)
+    // }
 
-    pub fn deauthorize_mint(ctx: Context<DeauthorizeMintCtx>) -> Result<()> {
-        deauthorize_mint::handler(ctx)
-    }
+    // pub fn deauthorize_mint(ctx: Context<DeauthorizeMintCtx>) -> Result<()> {
+    //     deauthorize_mint::handler(ctx)
+    // }
 
     pub fn stake(ctx: Context<StakeCtx>, amount: u64) -> Result<()> {
         stake::handler(ctx, amount)
     }
 
-    pub fn claim_receipt_mint<'key, 'accounts, 'remaining, 'info>(ctx: Context<'key, 'accounts, 'remaining, 'info, ClaimReceiptMintCtx<'info>>) -> Result<()> {
-        claim_receipt_mint::handler(ctx)
-    }
+    // pub fn claim_receipt_mint<'key, 'accounts, 'remaining, 'info>(ctx: Context<'key, 'accounts, 'remaining, 'info, ClaimReceiptMintCtx<'info>>) -> Result<()> {
+    //     claim_receipt_mint::handler(ctx)
+    // }
 
     pub fn unstake(ctx: Context<UnstakeCtx>) -> Result<()> {
         unstake::handler(ctx)
@@ -54,9 +54,9 @@ pub mod cardinal_stake_pool {
         update_total_stake_seconds::handler(ctx)
     }
 
-    pub fn return_receipt_mint<'key, 'accounts, 'remaining, 'info>(ctx: Context<'key, 'accounts, 'remaining, 'info, ReturnReceiptMintCtx<'info>>) -> Result<()> {
-        return_receipt_mint::handler(ctx)
-    }
+    // pub fn return_receipt_mint<'key, 'accounts, 'remaining, 'info>(ctx: Context<'key, 'accounts, 'remaining, 'info, ReturnReceiptMintCtx<'info>>) -> Result<()> {
+    //     return_receipt_mint::handler(ctx)
+    // }
 
     pub fn close_stake_pool(ctx: Context<CloseStakePoolCtx>) -> Result<()> {
         close_stake_pool::handler(ctx)
@@ -75,19 +75,20 @@ pub mod cardinal_stake_pool {
     }
 
     //// stake_booster ////
-    pub fn init_stake_booster(ctx: Context<InitStakeBoosterCtx>, ix: InitStakeBoosterIx) -> Result<()> {
-        stake_booster::init_stake_booster::handler(ctx, ix)
-    }
+    // pub fn init_stake_booster(ctx: Context<InitStakeBoosterCtx>, ix: InitStakeBoosterIx) -> Result<()> {
+    //     stake_booster::init_stake_booster::handler(ctx, ix)
+    // }
 
-    pub fn update_stake_booster(ctx: Context<UpdateStakeBoosterCtx>, ix: UpdateStakeBoosterIx) -> Result<()> {
-        stake_booster::update_stake_booster::handler(ctx, ix)
-    }
+    // pub fn update_stake_booster(ctx: Context<UpdateStakeBoosterCtx>, ix: UpdateStakeBoosterIx) -> Result<()> {
+    //     stake_booster::update_stake_booster::handler(ctx, ix)
+    // }
 
-    pub fn boost_stake_entry(ctx: Context<BoostStakeEntryCtx>, ix: BoostStakeEntryIx) -> Result<()> {
-        stake_booster::boost_stake_entry::handler(ctx, ix)
-    }
+    // pub fn boost_stake_entry(ctx: Context<BoostStakeEntryCtx>, ix: BoostStakeEntryIx) -> Result<()> {
+    //     stake_booster::boost_stake_entry::handler(ctx, ix)
+    // }
 
-    pub fn close_stake_booster(ctx: Context<CloseStakeBoosterCtx>) -> Result<()> {
-        stake_booster::close_stake_booster::handler(ctx)
-    }
+    // pub fn close_stake_booster(ctx: Context<CloseStakeBoosterCtx>) -> Result<()> {
+    //     stake_booster::close_stake_booster::handler(ctx)
+    // }
+    
 }

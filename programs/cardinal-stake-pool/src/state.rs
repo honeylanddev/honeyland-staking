@@ -91,6 +91,14 @@ pub struct Identifier {
     pub count: u64,
 }
 
+#[event]
+pub struct StakeOrUnstakeEvent {
+    pub authority: String,
+    pub entity_mint: String,
+    pub event_type: String,
+    pub time_stamp: i64
+}
+
 pub fn get_stake_seed(supply: u64, user: Pubkey) -> Pubkey {
     if supply > 1 {
         user

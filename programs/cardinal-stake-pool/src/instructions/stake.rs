@@ -8,10 +8,10 @@ use {
 pub struct StakeCtx<'info> {
     #[account(mut, seeds = [STAKE_ENTRY_PREFIX.as_bytes(), stake_entry.pool.as_ref(), stake_entry.original_mint.as_ref(), get_stake_seed(original_mint.supply, user.key()).as_ref()], bump=stake_entry.bump)]
     stake_entry: Box<Account<'info, StakeEntry>>,
-
+    
     #[account(mut, constraint = stake_entry.pool == stake_pool.key() @ ErrorCode::InvalidStakePool)]
     stake_pool: Box<Account<'info, StakePool>>,
-
+    
     // stake_entry token accounts
     #[account(mut, constraint =
         stake_entry_original_mint_token_account.mint == stake_entry.original_mint
@@ -74,6 +74,12 @@ pub fn handler(ctx: Context<StakeCtx>, amount: u64) -> Result<()> {
     stake_entry.last_staker = ctx.accounts.user.key();
     stake_entry.amount = stake_entry.amount.checked_add(amount).unwrap();
     stake_pool.total_staked = stake_pool.total_staked.checked_add(1).expect("Add error");
-
+    let clock: Clock = Clock::get().unwrap();
+    emit!(StakeOrUnstakeEvent {
+        authority: ctx.accounts.user.key().to_string(),
+        entity_mint: ctx.accounts.original_mint.key().to_string(),
+        event_type: String::from("Stake"),
+        time_stamp: clock.unix_timestamp
+    });
     Ok(())
 }
