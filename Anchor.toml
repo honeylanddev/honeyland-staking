@@ -12,11 +12,12 @@ cardinal_reward_distributor = "BfG2CLmVqKDM7RLLw9QvyZo4FzJt5XR3hVK7KQ36FPD4"
 cardinal_receipt_manager = "4cJvYVJAgeJ8v5XfmLbGdTLM4kfGfB8pUk1912yvj4z4"
 
 [scripts]
-test-local = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/tests.ts"
+test-all = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/tests.ts"
+test-hl = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/hl-tests.ts"
 
 [provider]
-cluster = "devnet"
-# cluster = "https://frosty-floral-wind.solana-devnet.quiknode.pro/fa3c7dec03be0b5335ff2905b342eedf94ada834/"
+# cluster = "devnet"
+cluster = "https://frosty-floral-wind.solana-devnet.quiknode.pro/fa3c7dec03be0b5335ff2905b342eedf94ada834/"
 wallet = "/home/setmax/.config/solana/devnet.json"
 #cluster = "localnet"
 #wallet = "/home/setmax/.config/solana/id.json"
