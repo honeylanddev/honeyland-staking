@@ -439,7 +439,7 @@ describe("testing-cardinal", () => {
                 )
             ).value[0];
 
-            await new Promise(resolve => setTimeout(resolve, 10000));
+            await new Promise(resolve => setTimeout(resolve, 20000));
             let transaction = await createUnStakeTransactionWithNonce(originalMintId, originalMintTokenAccountId?.pubkey as PublicKey, stakePoolId);
 
             const transactionConvertedToBase64 = transaction.serialize({requireAllSignatures:false,verifySignatures:false}).toString("base64");
