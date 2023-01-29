@@ -4,30 +4,19 @@ import { CardinalStakePool } from "../target/types/cardinal_stake_pool";
 import { CardinalReceiptManager } from "../target/types/cardinal_receipt_manager";
 import { CardinalRewardDistributor } from "../target/types/cardinal_reward_distributor";
 import { Connection, Keypair, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
-import { bundlrStorage, keypairIdentity, Metaplex, TransactionBuilder } from "@metaplex-foundation/js";
+import { bundlrStorage, keypairIdentity, Metaplex } from "@metaplex-foundation/js";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import { BN } from "bn.js";
-import { program } from "@project-serum/anchor/dist/cjs/spl/associated-token";
-import axios, { AxiosHeaders } from "axios";
+import axios from "axios";
 
 let AlphaBeedevNetSecretKey = bs58.decode("5VTe6S12HsXdDQK9xwrozD9XDJS6duQtAS7TDMmhySr5G2CeMhw7Yd6Dpfu2gfpJXHuU3QVSpu5Dwn115qMShFMD");
 let AlphaBeedevNetKeypair = Keypair.fromSecretKey(AlphaBeedevNetSecretKey)
 
 let StakeHolderSecretKey = bs58.decode("3fs9GE3KnScEXzdy6sxzW8sQyHrmsSTKPjUC2N5kMZmXMpTvLGDWmJyv23jadhcYz4KNwHbiyMXPLozrEVic1XvC");
 let StakeHolderKeypair = Keypair.fromSecretKey(StakeHolderSecretKey)
-
-let AkbarSecretKey = bs58.decode("uTvhpaA2uMHBZR8CJyVMdisasiFFpnY5A2qUQSH92i3TWcEzoScQfyLF28gaMReQw6SnqKuw2b7ocU4MkcwFXU5");
-let AkbarKeypair = Keypair.fromSecretKey(AkbarSecretKey)
-
-console.log(AlphaBeedevNetKeypair.publicKey.toBase58());
-
-
-const endpoint = "https://frosty-floral-wind.solana-devnet.quiknode.pro/fa3c7dec03be0b5335ff2905b342eedf94ada834/";
-const quickConnection = new Connection(endpoint);
-
 
 const provider = anchor.AnchorProvider.env();
 const wallet = provider.wallet as anchor.Wallet;
@@ -37,23 +26,25 @@ anchor.setProvider(provider);
 const STAKE_ENTRY_SEED = "stake-entry";
 const STAKE_POOL_SEED = "stake-pool";
 const IDENTIFIER_SEED = "identifier";
-const TOKEN_MANAGER_SEED = "token-manager";
-const MINT_COUNTER_SEED = "mint-counter";
+// const TOKEN_MANAGER_SEED = "token-manager";
+// const MINT_COUNTER_SEED = "mint-counter";
 
 
 
 const stakeProgram = anchor.workspace.CardinalStakePool as Program<CardinalStakePool>;
-const ReceiptProgram = anchor.workspace.CardinalReceiptManager as Program<CardinalReceiptManager>;
-const RewardProgram = anchor.workspace.CardinalRewardDistributor as Program<CardinalRewardDistributor>;
+// const ReceiptProgram = anchor.workspace.CardinalReceiptManager as Program<CardinalReceiptManager>;
+// const RewardProgram = anchor.workspace.CardinalRewardDistributor as Program<CardinalRewardDistributor>;
 const STAKE_POOL_ADDRESS = stakeProgram.programId;
-const TOKEN_MANAGER_ADDRESS = new PublicKey("mgr99QFMYByTqGPWmNqunV7vBLmWWXdSrHUfV8Jf3JM");
+// const TOKEN_MANAGER_ADDRESS = new PublicKey("mgr99QFMYByTqGPWmNqunV7vBLmWWXdSrHUfV8Jf3JM");
 
 
 
 export const quickMainConnection = new Connection("https://aged-red-snow.solana-mainnet.quiknode.pro/fb65b51e8c315a67b87c24163f238dce6f5b46c9/");
 export const quickDevConnection = new Connection("https://frosty-floral-wind.solana-devnet.quiknode.pro/fa3c7dec03be0b5335ff2905b342eedf94ada834/");
+
 const mxMain = Metaplex.make(quickMainConnection)
     .use(keypairIdentity(AlphaBeedevNetKeypair))
+
 const mxDev = Metaplex.make(quickDevConnection)
     .use(keypairIdentity(AlphaBeedevNetKeypair))
     .use(bundlrStorage({
@@ -71,25 +62,25 @@ describe("testing-cardinal", () => {
     const DIRECT_UNSTAKE = false;
     const STAKE_WITHOUT_NONCE = false;
     const UNSTAKE_WITHOUT_NONCE = false;
-    const STAKE_WITH_NONCE = false;
+    const STAKE_WITH_NONCE = true;
     const UNSTAKE_WITH_NONCE = true;
 
 
 
     let identifierId: PublicKey;
-    let originalMintTokenAccountId: PublicKey;
-    let originalMintId: PublicKey;
-    let newCollectionOriginalMintTokenAccountId: PublicKey;
-    let newCollectionOriginalMintId: PublicKey;
-    let newCreatorOriginalMintTokenAccountId: PublicKey;
-    let newCreatorOriginalMintId: PublicKey;
+    // let originalMintTokenAccountId: PublicKey;
+    // let originalMintId: PublicKey;
+    // let newCollectionOriginalMintTokenAccountId: PublicKey;
+    // let newCollectionOriginalMintId: PublicKey;
+    // let newCreatorOriginalMintTokenAccountId: PublicKey;
+    // let newCreatorOriginalMintId: PublicKey;
     let originalMintMetadatId: anchor.web3.PublicKey;
-    let receiptType: ReceiptType = 1;
-    let tokenManagerId: PublicKey;
-    let mintCounterId: PublicKey;
-    let userReceiptMintTokenAccountId: PublicKey;
+    // let receiptType: ReceiptType = 1;
+    // let tokenManagerId: PublicKey;
+    // let mintCounterId: PublicKey;
+    // let userReceiptMintTokenAccountId: PublicKey;
     let stakeEntryOriginalMintTokenAccountId: PublicKey;
-    let mx: Metaplex;
+    // let mx: Metaplex;
 
     it("init stakepool", async () => {
         if (CREATE_STAKE_POOL) {
@@ -150,12 +141,12 @@ describe("testing-cardinal", () => {
     it("stake DIRECT", async () => {
         if(DIRECT_STAKE){
         // Stake Pool Info Panel(Devnet)
-        // identifier id:  4HtwRqB4k1wG9BkmdZBsJDaanSsHpopyhvgmUuhxbyBJ
-        // stake pool identifier is:  11
-        // stake pool id:  7xiKdtTd8yUEKFaLfFDxkDKEwEebtfzZxa7y12LZok1V
+        // identifier id:  GVtCyw2rsKWgUKcVAsx6VZxu282Hh37KsyWvyPL5nsNe
+        // stake pool identifier is:  4
+        // stake pool id:  EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz
         // stake pool owner:  ozM7xJP4cPQjPY1Ar3sWDRsUkekRSdoGw5mU2PFNePA
 
-        const stakePoolId = new PublicKey("7xiKdtTd8yUEKFaLfFDxkDKEwEebtfzZxa7y12LZok1V");
+        const stakePoolId = new PublicKey("EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz");
         const originalMintId = new PublicKey("Gzco73g24yFYT21CZDHFbVQ1KCdF7oES1rAL8xiRF8zg");
         const originalMintTokenAccountId = (
             await mxDev.connection.getTokenAccountsByOwner(
@@ -265,12 +256,12 @@ describe("testing-cardinal", () => {
     it("unstake DIRECT", async () => {
         if(DIRECT_UNSTAKE){
         // Stake Pool Info Panel(Devnet)
-        // identifier id:  4HtwRqB4k1wG9BkmdZBsJDaanSsHpopyhvgmUuhxbyBJ
-        // stake pool identifier is:  11
-        // stake pool id:  7xiKdtTd8yUEKFaLfFDxkDKEwEebtfzZxa7y12LZok1V
+        // identifier id:  GVtCyw2rsKWgUKcVAsx6VZxu282Hh37KsyWvyPL5nsNe
+        // stake pool identifier is:  4
+        // stake pool id:  EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz
         // stake pool owner:  ozM7xJP4cPQjPY1Ar3sWDRsUkekRSdoGw5mU2PFNePA
 
-        const stakePoolId = new PublicKey("7xiKdtTd8yUEKFaLfFDxkDKEwEebtfzZxa7y12LZok1V");
+        const stakePoolId = new PublicKey("EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz");
         const originalMintId = new PublicKey("Gzco73g24yFYT21CZDHFbVQ1KCdF7oES1rAL8xiRF8zg");
         const originalMintTokenAccountId = (
             await mxDev.connection.getTokenAccountsByOwner(
@@ -308,12 +299,12 @@ describe("testing-cardinal", () => {
     it("stake without nonce", async () => {
         if(STAKE_WITHOUT_NONCE){
             // Stake Pool Info Panel(Devnet)
-            // identifier id:  4HtwRqB4k1wG9BkmdZBsJDaanSsHpopyhvgmUuhxbyBJ
-            // stake pool identifier is:  11
-            // stake pool id:  7xiKdtTd8yUEKFaLfFDxkDKEwEebtfzZxa7y12LZok1V
+            // identifier id:  GVtCyw2rsKWgUKcVAsx6VZxu282Hh37KsyWvyPL5nsNe
+            // stake pool identifier is:  4
+            // stake pool id:  EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz
             // stake pool owner:  ozM7xJP4cPQjPY1Ar3sWDRsUkekRSdoGw5mU2PFNePA
 
-            const stakePoolId = new PublicKey("7xiKdtTd8yUEKFaLfFDxkDKEwEebtfzZxa7y12LZok1V");
+            const stakePoolId = new PublicKey("EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz");
             const originalMintId = new PublicKey("Gzco73g24yFYT21CZDHFbVQ1KCdF7oES1rAL8xiRF8zg");
             const originalMintTokenAccountId = (
                 await mxDev.connection.getTokenAccountsByOwner(
@@ -336,7 +327,7 @@ describe("testing-cardinal", () => {
             const JWTToken = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxMzkiLCJuYW1lIjoiNGduckF1S2Z3TFhDeTRaS0NXQlZZaTl3VTRxNkt3TkhkSExqUHJyWjdjOUIiLCJuYmYiOjE2NzQ2OTk0MjAsImV4cCI6MTcxMDY5OTQyMCwiaWF0IjoxNjc0Njk5NDIwLCJpc3MiOiJIb25leWxhbmRXZWJTaXRlIiwiYXVkIjoiSG9uZXlsYW5kV2ViU2l0ZSJ9.OcNmiPbke03i4iBVHFTxcGEQl_6FZTmIII6lq-AmCcQbfFDU6vg4QN6vE0d4lOPC1kffgHq-_m9owqlnijW5eQ";
 
             const api = 'https://api-staging.honey.land/api/v1/UserBlockchain/SendTransactionWithoutNonce';
-            await axios.post(api, {transactionType: 'NewStake', transactionBase64: transactionConvertedToBase64}, {headers:{"Authorization" : `Bearer ${JWTToken}`}})
+            await axios.post(api, {transactionType: 'HLStakePro-Stake', transactionBase64: transactionConvertedToBase64}, {headers:{"Authorization" : `Bearer ${JWTToken}`}})
             .then(function (response) {
             // console.log(response.data);
             return response.data;
@@ -351,12 +342,12 @@ describe("testing-cardinal", () => {
     it("unstake without nonce", async () => {
         if(UNSTAKE_WITHOUT_NONCE){
             // Stake Pool Info Panel(Devnet)
-            // identifier id:  4HtwRqB4k1wG9BkmdZBsJDaanSsHpopyhvgmUuhxbyBJ
-            // stake pool identifier is:  11
-            // stake pool id:  7xiKdtTd8yUEKFaLfFDxkDKEwEebtfzZxa7y12LZok1V
+            // identifier id:  GVtCyw2rsKWgUKcVAsx6VZxu282Hh37KsyWvyPL5nsNe
+            // stake pool identifier is:  4
+            // stake pool id:  EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz
             // stake pool owner:  ozM7xJP4cPQjPY1Ar3sWDRsUkekRSdoGw5mU2PFNePA
 
-            const stakePoolId = new PublicKey("7xiKdtTd8yUEKFaLfFDxkDKEwEebtfzZxa7y12LZok1V");
+            const stakePoolId = new PublicKey("EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz");
             const originalMintId = new PublicKey("Gzco73g24yFYT21CZDHFbVQ1KCdF7oES1rAL8xiRF8zg");
             const originalMintTokenAccountId = (
                 await mxDev.connection.getTokenAccountsByOwner(
@@ -378,7 +369,7 @@ describe("testing-cardinal", () => {
             const JWTToken = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxMzkiLCJuYW1lIjoiNGduckF1S2Z3TFhDeTRaS0NXQlZZaTl3VTRxNkt3TkhkSExqUHJyWjdjOUIiLCJuYmYiOjE2NzQ2OTk0MjAsImV4cCI6MTcxMDY5OTQyMCwiaWF0IjoxNjc0Njk5NDIwLCJpc3MiOiJIb25leWxhbmRXZWJTaXRlIiwiYXVkIjoiSG9uZXlsYW5kV2ViU2l0ZSJ9.OcNmiPbke03i4iBVHFTxcGEQl_6FZTmIII6lq-AmCcQbfFDU6vg4QN6vE0d4lOPC1kffgHq-_m9owqlnijW5eQ";
 
             const api = 'https://api-staging.honey.land/api/v1/UserBlockchain/SendTransactionWithoutNonce';
-            await axios.post(api, {transactionType: 'NewUnStake', transactionBase64: transactionConvertedToBase64}, {headers:{"Authorization" : `Bearer ${JWTToken}`}})
+            await axios.post(api, {transactionType: 'HLStakePro-UnStake', transactionBase64: transactionConvertedToBase64}, {headers:{"Authorization" : `Bearer ${JWTToken}`}})
             .then(function (response) {
             // console.log(response.data);
             return response.data;
@@ -393,12 +384,12 @@ describe("testing-cardinal", () => {
     it("stake with nonce", async () => {
         if(STAKE_WITH_NONCE){
             // Stake Pool Info Panel(Devnet)
-            // identifier id:  4HtwRqB4k1wG9BkmdZBsJDaanSsHpopyhvgmUuhxbyBJ
-            // stake pool identifier is:  11
-            // stake pool id:  7xiKdtTd8yUEKFaLfFDxkDKEwEebtfzZxa7y12LZok1V
+            // identifier id:  GVtCyw2rsKWgUKcVAsx6VZxu282Hh37KsyWvyPL5nsNe
+            // stake pool identifier is:  4
+            // stake pool id:  EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz
             // stake pool owner:  ozM7xJP4cPQjPY1Ar3sWDRsUkekRSdoGw5mU2PFNePA
 
-            const stakePoolId = new PublicKey("7xiKdtTd8yUEKFaLfFDxkDKEwEebtfzZxa7y12LZok1V");
+            const stakePoolId = new PublicKey("EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz");
             const originalMintId = new PublicKey("Gzco73g24yFYT21CZDHFbVQ1KCdF7oES1rAL8xiRF8zg");
             const originalMintTokenAccountId = (
                 await mxDev.connection.getTokenAccountsByOwner(
@@ -417,7 +408,7 @@ describe("testing-cardinal", () => {
             const JWTToken = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxMzkiLCJuYW1lIjoiNGduckF1S2Z3TFhDeTRaS0NXQlZZaTl3VTRxNkt3TkhkSExqUHJyWjdjOUIiLCJuYmYiOjE2NzQ2OTk0MjAsImV4cCI6MTcxMDY5OTQyMCwiaWF0IjoxNjc0Njk5NDIwLCJpc3MiOiJIb25leWxhbmRXZWJTaXRlIiwiYXVkIjoiSG9uZXlsYW5kV2ViU2l0ZSJ9.OcNmiPbke03i4iBVHFTxcGEQl_6FZTmIII6lq-AmCcQbfFDU6vg4QN6vE0d4lOPC1kffgHq-_m9owqlnijW5eQ";
 
             const api = 'https://api-staging.honey.land/api/v1/UserBlockchain/SendTransaction';
-            await axios.post(api, {transactionType: 'NewStake', transactionBase64: transactionConvertedToBase64}, {headers:{"Authorization" : `Bearer ${JWTToken}`}})
+            await axios.post(api, {transactionType: 'HLStakePro-Stake', transactionBase64: transactionConvertedToBase64}, {headers:{"Authorization" : `Bearer ${JWTToken}`}})
             .then(function (response) {
             // console.log(response.data);
             return response.data;
@@ -432,12 +423,12 @@ describe("testing-cardinal", () => {
     it("unstake with nonce", async () => {
         if(UNSTAKE_WITH_NONCE){
             // Stake Pool Info Panel(Devnet)
-            // identifier id:  4HtwRqB4k1wG9BkmdZBsJDaanSsHpopyhvgmUuhxbyBJ
-            // stake pool identifier is:  11
-            // stake pool id:  7xiKdtTd8yUEKFaLfFDxkDKEwEebtfzZxa7y12LZok1V
+            // identifier id:  GVtCyw2rsKWgUKcVAsx6VZxu282Hh37KsyWvyPL5nsNe
+            // stake pool identifier is:  4
+            // stake pool id:  EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz
             // stake pool owner:  ozM7xJP4cPQjPY1Ar3sWDRsUkekRSdoGw5mU2PFNePA
 
-            const stakePoolId = new PublicKey("7xiKdtTd8yUEKFaLfFDxkDKEwEebtfzZxa7y12LZok1V");
+            const stakePoolId = new PublicKey("EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz");
             const originalMintId = new PublicKey("Gzco73g24yFYT21CZDHFbVQ1KCdF7oES1rAL8xiRF8zg");
             const originalMintTokenAccountId = (
                 await mxDev.connection.getTokenAccountsByOwner(
@@ -456,7 +447,7 @@ describe("testing-cardinal", () => {
             const JWTToken = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYW1laWQiOiIxMzkiLCJuYW1lIjoiNGduckF1S2Z3TFhDeTRaS0NXQlZZaTl3VTRxNkt3TkhkSExqUHJyWjdjOUIiLCJuYmYiOjE2NzQ2OTk0MjAsImV4cCI6MTcxMDY5OTQyMCwiaWF0IjoxNjc0Njk5NDIwLCJpc3MiOiJIb25leWxhbmRXZWJTaXRlIiwiYXVkIjoiSG9uZXlsYW5kV2ViU2l0ZSJ9.OcNmiPbke03i4iBVHFTxcGEQl_6FZTmIII6lq-AmCcQbfFDU6vg4QN6vE0d4lOPC1kffgHq-_m9owqlnijW5eQ";
 
             const api = 'https://api-staging.honey.land/api/v1/UserBlockchain/SendTransaction';
-            await axios.post(api, {transactionType: 'NewUnStake', transactionBase64: transactionConvertedToBase64}, {headers:{"Authorization" : `Bearer ${JWTToken}`}})
+            await axios.post(api, {transactionType: 'HLStakePro-UnStake', transactionBase64: transactionConvertedToBase64}, {headers:{"Authorization" : `Bearer ${JWTToken}`}})
             .then(function (response) {
             // console.log(response.data);
             return response.data;
@@ -483,17 +474,6 @@ export async function tryGetAccount<T>(fn: AccountFn<T>) {
         return null;
     }
 }
-
-enum ReceiptType {
-    // Receive the original mint wrapped in a token manager
-    Original = 1,
-    // Receive a receipt mint wrapped in a token manager
-    Receipt = 2,
-    // Receive nothing
-    None = 3,
-}
-
-
 
 async function createStakeTransaction(nftMintId: PublicKey, nftMintTokenAccountId: PublicKey, stakePoolId: PublicKey,): Promise<Transaction> {
     let transaction = new Transaction();
