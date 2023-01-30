@@ -53,7 +53,7 @@ const mxDev = Metaplex.make(quickDevConnection)
         timeout: 60000,
     }));
 
-describe("testing-cardinal", () => {
+describe("Honeyland Stake Pro Test", () => {
 
     let stakePoolId: PublicKey;
     // let stakePoolId: PublicKey = new PublicKey("HtFqafRt9FewnF9onmPRgNbqvPZn3FP6pVZBsEaBAsm2");
@@ -390,7 +390,7 @@ describe("testing-cardinal", () => {
             // stake pool owner:  ozM7xJP4cPQjPY1Ar3sWDRsUkekRSdoGw5mU2PFNePA
 
             const stakePoolId = new PublicKey("EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz");
-            const originalMintId = new PublicKey("Gzco73g24yFYT21CZDHFbVQ1KCdF7oES1rAL8xiRF8zg");
+            const originalMintId = new PublicKey("3NPhrY452pGpLtqj3qyFfX1LZaoB935uTnVKheHDrEKu");
             const originalMintTokenAccountId = (
                 await mxDev.connection.getTokenAccountsByOwner(
                     StakeHolderKeypair.publicKey,
@@ -429,7 +429,7 @@ describe("testing-cardinal", () => {
             // stake pool owner:  ozM7xJP4cPQjPY1Ar3sWDRsUkekRSdoGw5mU2PFNePA
 
             const stakePoolId = new PublicKey("EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz");
-            const originalMintId = new PublicKey("Gzco73g24yFYT21CZDHFbVQ1KCdF7oES1rAL8xiRF8zg");
+            const originalMintId = new PublicKey("3NPhrY452pGpLtqj3qyFfX1LZaoB935uTnVKheHDrEKu");
             const originalMintTokenAccountId = (
                 await mxDev.connection.getTokenAccountsByOwner(
                     StakeHolderKeypair.publicKey,
