@@ -58,12 +58,13 @@ describe("Honeyland Stake Pro Test", () => {
     let stakePoolId: PublicKey;
     // let stakePoolId: PublicKey = new PublicKey("HtFqafRt9FewnF9onmPRgNbqvPZn3FP6pVZBsEaBAsm2");
     const CREATE_STAKE_POOL = false;
+    const UPDATE_STAKE_POOL = true;
     const DIRECT_STAKE = false;
     const DIRECT_UNSTAKE = false;
     const STAKE_WITHOUT_NONCE = false;
     const UNSTAKE_WITHOUT_NONCE = false;
-    const STAKE_WITH_NONCE = true;
-    const UNSTAKE_WITH_NONCE = true;
+    const STAKE_WITH_NONCE = false;
+    const UNSTAKE_WITH_NONCE = false;
 
 
 
@@ -135,6 +136,41 @@ describe("Honeyland Stake Pro Test", () => {
             ]).rpc()
             console.log("stake pool id: ", stakePoolId.toBase58());
             console.log("stake pool owner: ", wallet.publicKey.toBase58())
+        }
+    });
+
+    it("update pool - add new collection", async () => {
+        if (UPDATE_STAKE_POOL) {
+        // Stake Pool Info Panel(Devnet)
+        // identifier id:  GVtCyw2rsKWgUKcVAsx6VZxu282Hh37KsyWvyPL5nsNe
+        // stake pool identifier is:  4
+        // stake pool id:  EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz
+        // stake pool owner:  ozM7xJP4cPQjPY1Ar3sWDRsUkekRSdoGw5mU2PFNePA
+
+        const stakePoolId = new PublicKey("EPVNCcJkQ5wN7eZwF9SADiwDVQRpJAVv58HQ4DFD2yPz");
+
+        await stakeProgram.methods.updatePool({
+            authority: new PublicKey(provider.wallet.publicKey),
+            requiresCreators: [],
+            requiresCollections: [
+                new PublicKey("BrjmDK2BFXXiF55Ch6Z82W1N7WEQjqow37WbSRJpnxxb"),//land coll
+                new PublicKey("7EvnWDZdYPUSwYvQ4LGJ7feBa3PEBbYmpD9Nvq3i4noP"),//genesis coll
+                new PublicKey("GTzu75kxdu6vcpaiccou2ZSFTyhrFEJBiEdFh66VtKaj"),//generations coll
+                new PublicKey("HqsLosMRWdAgWr4aPgSayRDeCfZtKHJE6XemhahGCJh2"),//pass coll
+                new PublicKey("23jCSkRTycKTjrvAUqy2Mpez3Wan618eEerydFDGND5m"),//mad honey(items) coll
+            ],
+            imageUri: "",
+            resetOnStake: false,
+            cooldownSeconds: null,
+            minStakeSeconds: 5,
+            endDate: null,
+            requiresAuthorization: false,
+            overlayText: "",
+        }).accounts({
+            stakePool: stakePoolId,
+            payer: provider.wallet.publicKey
+        }).signers([])
+            .rpc();
         }
     });
 
