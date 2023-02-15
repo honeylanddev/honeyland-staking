@@ -6,7 +6,13 @@ skip-lint = false
 # cardinal_stake_pool = "73QM3VFNvtS2k5KJ3zH8RvkR4ri9gQaE1f4t1dnPNmSA"
 # cardinal_reward_distributor = "E2z64E5B64qvpsbArf9AE3m8vhAazqXh4FmiRKp1aKSt"
 # cardinal_receipt_manager = "EmMEf6vBxFhyeDR6Q8BXNB3734LxufxEE8JbUMmiSPGC"
+
 [programs.devnet]
+cardinal_stake_pool = "HLstk9rqdV3ADMKdayqVTivmiCsUrA54YjEVK3tQEbj6"
+cardinal_reward_distributor = "BfG2CLmVqKDM7RLLw9QvyZo4FzJt5XR3hVK7KQ36FPD4"
+cardinal_receipt_manager = "4cJvYVJAgeJ8v5XfmLbGdTLM4kfGfB8pUk1912yvj4z4"
+
+[programs.mainnet]
 cardinal_stake_pool = "HLstk9rqdV3ADMKdayqVTivmiCsUrA54YjEVK3tQEbj6"
 cardinal_reward_distributor = "BfG2CLmVqKDM7RLLw9QvyZo4FzJt5XR3hVK7KQ36FPD4"
 cardinal_receipt_manager = "4cJvYVJAgeJ8v5XfmLbGdTLM4kfGfB8pUk1912yvj4z4"
@@ -21,7 +27,8 @@ test-pro = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/tests-hl-pr
 # cluster = "https://frosty-floral-wind.solana-devnet.quiknode.pro/fa3c7dec03be0b5335ff2905b342eedf94ada834/"
 # wallet = "/home/setmax/.config/solana/devnet.json"
 
-cluster = "https://delicate-dark-rain.solana-mainnet.quiknode.pro/4bc3650ce97395e47b05a0177dc7b7dbc7f886a0/"
+cluster = "mainnet"
+# cluster = "https://delicate-dark-rain.solana-mainnet.quiknode.pro/4bc3650ce97395e47b05a0177dc7b7dbc7f886a0/"
 wallet = "/home/setmax/.config/solana/main_wallets/hl_upgrade_auth.json"
 
 
