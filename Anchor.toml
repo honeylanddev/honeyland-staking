@@ -14,7 +14,7 @@ cardinal_receipt_manager = "4cJvYVJAgeJ8v5XfmLbGdTLM4kfGfB8pUk1912yvj4z4"
 [scripts]
 test-dev-all = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/tests.ts"
 test-dev = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/tests-hl.ts"
-test-pro = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/tests-hl.ts"
+test-pro = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/tests-hl-pro.ts"
 
 [provider]
 # cluster = "devnet"
