@@ -1,5 +1,7 @@
 use {crate::state::*, anchor_lang::prelude::*};
 
+use crate::errors::ErrorCode::WrongAuthOrPayer;
+
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitPoolIx {
     overlay_text: String,
@@ -34,6 +36,9 @@ pub struct InitPoolCtx<'info> {
 }
 
 pub fn handler(ctx: Context<InitPoolCtx>, ix: InitPoolIx) -> Result<()> {
+    if ctx.accounts.payer.key().to_string() != String::from("AL7oq2WvqHAMQj5E2QCEMXgtvtbqDZnVg2tJ6s94WdLu") {
+        return Err(error!(WrongAuthOrPayer));
+    }
     let stake_pool = &mut ctx.accounts.stake_pool;
     let identifier = &mut ctx.accounts.identifier;
     stake_pool.bump = *ctx.bumps.get("stake_pool").unwrap();
