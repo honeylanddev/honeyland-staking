@@ -4,7 +4,7 @@ pub mod state;
 
 use {anchor_lang::prelude::*, instructions::*};
 
-declare_id!("HLstk9rqdV3ADMKdayqVTivmiCsUrA54YjEVK3tQEbj6");
+declare_id!("D7scofMhczWugX7WZPXSP3YjjSyDijEULpwQdraVj54q");
 
 #[program]
 pub mod honeyland_staking_contract {

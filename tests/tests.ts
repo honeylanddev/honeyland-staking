@@ -1,10 +1,8 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
-import { CardinalStakePool } from "../target/types/cardinal_stake_pool";
-import { CardinalReceiptManager } from "../target/types/cardinal_receipt_manager";
-import { CardinalRewardDistributor } from "../target/types/cardinal_reward_distributor";
+import { HoneylandStakingContract } from "../target/types/honeyland_staking_contract";
 import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
-import { bundlrStorage, keypairIdentity, Metaplex } from "@metaplex-foundation/js";
+import { bundlrStorage, keypairIdentity, Metaplex, mockStorage } from "@metaplex-foundation/js";
 import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
@@ -30,9 +28,7 @@ const MINT_COUNTER_SEED = "mint-counter";
 
 
 
-const stakeProgram = anchor.workspace.CardinalStakePool as Program<CardinalStakePool>;
-const ReceiptProgram = anchor.workspace.CardinalReceiptManager as Program<CardinalReceiptManager>;
-const RewardProgram = anchor.workspace.CardinalRewardDistributor as Program<CardinalRewardDistributor>;
+const stakeProgram = anchor.workspace.HoneylandStakingContract as Program<HoneylandStakingContract>;
 const STAKE_POOL_ADDRESS = stakeProgram.programId;
 const TOKEN_MANAGER_ADDRESS = new PublicKey("mgr99QFMYByTqGPWmNqunV7vBLmWWXdSrHUfV8Jf3JM");
 0
@@ -57,6 +53,35 @@ describe("testing-cardinal", () => {
     let userReceiptMintTokenAccountId: PublicKey;
     let stakeEntryOriginalMintTokenAccountId: PublicKey;
     let mx: Metaplex;
+    let originalCollectionMint: PublicKey;
+    let secondaryCollectionMint: PublicKey;
+
+
+    it("making collections for tests", async () => {
+        // mx = new Metaplex(provider.connection).use(bundlrStorage({
+        //     address: 'https://devnet.bundlr.network',
+        //     providerUrl: 'https://api.devnet.solana.com',
+        //     timeout: 60000,
+        // })).use(keypairIdentity(AlphaBeedevNetKeypair as anchor.web3.Keypair));
+        mx = new Metaplex(provider.connection).use(keypairIdentity(AlphaBeedevNetKeypair as anchor.web3.Keypair)).use(mockStorage());
+        let nftCollection = await mx.nfts().create({
+            name: "Cl1",
+            sellerFeeBasisPoints: 410,
+            uri: "",
+            symbol: 'CLL',
+            isCollection: true
+        }).run();
+        originalCollectionMint = nftCollection.mintAddress;
+        nftCollection = await mx.nfts().create({
+            name: "Cl2",
+            sellerFeeBasisPoints: 410,
+            uri: "",
+            symbol: 'CLL',
+            isCollection: true
+        }).run();
+        secondaryCollectionMint = nftCollection.mintAddress;
+
+    });
 
     it("init stakepool", async () => {
         if (CREATE_STAKE_POOL) {
@@ -92,7 +117,8 @@ describe("testing-cardinal", () => {
                 authority: new PublicKey(provider.wallet.publicKey),
                 requiresCreators: [],
                 requiresCollections: [
-                    new PublicKey("9VXBFkSnCHvsEB2P32MRDkye6zSDpLNepJLjPLeVMTX4")
+                    // new PublicKey("9VXBFkSnCHvsEB2P32MRDkye6zSDpLNepJLjPLeVMTX4")
+                    originalCollectionMint
                 ],
                 imageUri: "",
                 resetOnStake: false,
@@ -112,35 +138,20 @@ describe("testing-cardinal", () => {
         }
     });
 
-    it("Make stake nft for pool", async () => {
-        mx = new Metaplex(provider.connection).use(bundlrStorage({
-            address: 'https://devnet.bundlr.network',
-            providerUrl: 'https://api.devnet.solana.com',
-            timeout: 60000,
-        })).use(keypairIdentity(AlphaBeedevNetKeypair as anchor.web3.Keypair));
-        // make collection
-        // let { mintAddress } = await mx.nfts().create({
-        //     uri: "",
-        //     name: "collectionN1",
-        //     sellerFeeBasisPoints: 0,
-        //     isCollection: true,
-        //     isMutable: true
-        // }).run()
-        // console.log("collection address: ", mintAddress.toBase58());
-
+    it("Make nfts for testing", async () => {
         // make nft 
         let { nft } = await mx.nfts().create({
             uri: "",
             name: "nftN1",
             sellerFeeBasisPoints: 100,
-            collection: new PublicKey("9VXBFkSnCHvsEB2P32MRDkye6zSDpLNepJLjPLeVMTX4"),
+            // collection: new PublicKey("9VXBFkSnCHvsEB2P32MRDkye6zSDpLNepJLjPLeVMTX4"),
+            collection: originalCollectionMint,
             collectionAuthority: AlphaBeedevNetKeypair
         }).run()
         originalMintId = nft.mint.address;
         originalMintTokenAccountId = nft.token.address;
         console.log("made nft: ", nft.address.toBase58());
         console.log("made nft token account", originalMintTokenAccountId.toBase58());
-
     })
 
     it("stake!", async () => {
@@ -423,8 +434,8 @@ describe("testing-cardinal", () => {
             authority: new PublicKey(provider.wallet.publicKey),
             requiresCreators: [],
             requiresCollections: [
-                new PublicKey("9VXBFkSnCHvsEB2P32MRDkye6zSDpLNepJLjPLeVMTX4"),
-                new PublicKey("8nM9iT2Gm6JfsukCn5GzeVUChfu1ePeHyxGRYgJygVyU"),
+                originalCollectionMint,
+                secondaryCollectionMint
             ],
             imageUri: "",
             resetOnStake: false,
@@ -445,13 +456,13 @@ describe("testing-cardinal", () => {
             uri: "",
             name: "nftN2",
             sellerFeeBasisPoints: 100,
-            collection: new PublicKey("8nM9iT2Gm6JfsukCn5GzeVUChfu1ePeHyxGRYgJygVyU"),
+            collection: secondaryCollectionMint,
             collectionAuthority: AlphaBeedevNetKeypair
         }).run()
         newCollectionOriginalMintId = nft.mint.address
         newCollectionOriginalMintTokenAccountId = nft.token.address;
         console.log("made nft with new collection: ", nft.address.toBase58());
-        console.log("made nft with new collection token account", newCollectionOriginalMintId.toBase58());
+        console.log("made nft with new collection token account", newCollectionOriginalMintTokenAccountId.toBase58());
     });
 
     it("stake nft with new collection", async () => {
@@ -490,8 +501,8 @@ describe("testing-cardinal", () => {
                 new PublicKey("GtujtKvcfft9UkTGDnFNoZiuqP9t7pTZPLQte6HT8ziP")
             ],
             requiresCollections: [
-                new PublicKey("9VXBFkSnCHvsEB2P32MRDkye6zSDpLNepJLjPLeVMTX4"),
-                new PublicKey("8nM9iT2Gm6JfsukCn5GzeVUChfu1ePeHyxGRYgJygVyU"),
+                originalCollectionMint,
+                secondaryCollectionMint
             ],
             imageUri: "",
             resetOnStake: false,
@@ -590,7 +601,6 @@ describe("testing-cardinal", () => {
         }
     });
 
-
     it("staking an nft which doesn't have valid conditions gives error", async () => {
         let { nft } = await mx.nfts().create({
             uri: "",
@@ -602,8 +612,8 @@ describe("testing-cardinal", () => {
         }).run()
         let newUnvalidOriginalMintId = nft.mint.address;
         let newUnvalidOriginalMintTokenAccountId = nft.token.address;
-        console.log("made nft with unvalid data: ", nft.address.toBase58());
-        console.log("made nft with unvalid data token account", newCollectionOriginalMintId.toBase58());
+        console.log("made nft with invalid data: ", nft.address.toBase58());
+        console.log("made nft with invalid data token account", newUnvalidOriginalMintTokenAccountId.toBase58());
 
         let transaction = await createStakeTransaction(newUnvalidOriginalMintId, newUnvalidOriginalMintTokenAccountId, stakePoolId)
         try {
@@ -631,6 +641,9 @@ describe("testing-cardinal", () => {
         await stakeProgram.methods.stakePoolFillZeros().accounts({
             stakePool: stakePoolId
         }).rpc()
+        let stakePool = await stakeProgram.account.stakePool.fetch(stakePoolId);
+        console.log(stakePool);
+
     })
 
     it("close pool", async () => {
@@ -807,7 +820,7 @@ async function createUnStakeTransaction(nftMintId: PublicKey, nftMintTokenAccoun
 async function sendTransaction(transaction: Transaction) {
     try {
         console.log("in transaction");
-        
+
         transaction.recentBlockhash = (
             await provider.connection.getLatestBlockhash()
         ).blockhash;

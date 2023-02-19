@@ -17,9 +17,9 @@ pub struct InitIdentifierCtx<'info> {
 }
 
 pub fn handler(ctx: Context<InitIdentifierCtx>) -> Result<()> {
-    if ctx.accounts.payer.key().to_string() != String::from("AL7oq2WvqHAMQj5E2QCEMXgtvtbqDZnVg2tJ6s94WdLu") {
-        return Err(error!(ErrorCode::WrongAuthOrPayer));
-    }
+    // if ctx.accounts.payer.key().to_string() != String::from("AL7oq2WvqHAMQj5E2QCEMXgtvtbqDZnVg2tJ6s94WdLu") {
+    //     return Err(error!(ErrorCode::WrongAuthOrPayer));
+    // }
     let identifier = &mut ctx.accounts.identifier;
     identifier.bump = *ctx.bumps.get("identifier").unwrap();
     identifier.count = 1;
