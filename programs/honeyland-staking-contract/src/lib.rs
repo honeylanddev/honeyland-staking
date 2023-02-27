@@ -26,8 +26,16 @@ pub mod honeyland_staking_contract {
         stake::handler(ctx, amount)
     }
 
+    pub fn stake_freeze(ctx: Context<StakeFreezeCtx>, amount: u64) -> Result<()> {
+        stake_freeze::handler(ctx, amount)
+    }
+
     pub fn unstake(ctx: Context<UnstakeCtx>) -> Result<()> {
         unstake::handler(ctx)
+    }
+
+    pub fn unstake_freeze(ctx: Context<UnstakeFreezeCtx>) -> Result<()> {
+        unstake_freeze::handler(ctx)
     }
 
     pub fn update_pool(ctx: Context<UpdatePoolCtx>, ix: UpdatePoolIx) -> Result<()> {

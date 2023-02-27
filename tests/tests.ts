@@ -3,14 +3,18 @@ import { Program } from "@project-serum/anchor";
 import { HoneylandStakingContract } from "../target/types/honeyland_staking_contract";
 import { Connection, Keypair, PublicKey, Transaction } from "@solana/web3.js";
 import { bundlrStorage, keypairIdentity, Metaplex, mockStorage } from "@metaplex-foundation/js";
-import { Metadata } from "@metaplex-foundation/mpl-token-metadata";
+import { Metadata, MetadataProgram } from "@metaplex-foundation/mpl-token-metadata";
 import { bs58 } from "@project-serum/anchor/dist/cjs/utils/bytes";
-import { ASSOCIATED_TOKEN_PROGRAM_ID, getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { ASSOCIATED_TOKEN_PROGRAM_ID, burnChecked, getAssociatedTokenAddress, getOrCreateAssociatedTokenAccount, revoke, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { createAssociatedTokenAccountInstruction } from "@solana/spl-token";
 import { BN } from "bn.js";
 import { program } from "@project-serum/anchor/dist/cjs/spl/associated-token";
+import { transfer } from "@solana/spl-token";
+import { transferChecked } from "@solana/spl-token";
+import { getAccount } from "@solana/spl-token";
 let AlphaBeedevNetSecretKey = bs58.decode("5VTe6S12HsXdDQK9xwrozD9XDJS6duQtAS7TDMmhySr5G2CeMhw7Yd6Dpfu2gfpJXHuU3QVSpu5Dwn115qMShFMD");
 let AlphaBeedevNetKeypair = Keypair.fromSecretKey(AlphaBeedevNetSecretKey)
+
 console.log(AlphaBeedevNetKeypair.publicKey.toBase58());
 
 const provider = anchor.AnchorProvider.env()
@@ -154,282 +158,196 @@ describe("testing-cardinal", () => {
         console.log("made nft token account", originalMintTokenAccountId.toBase58());
     })
 
-    it("stake!", async () => {
-        let transaction = new Transaction();
-        const [stakeEntryId] = await anchor.web3.PublicKey.findProgramAddress(
-            [
-                anchor.utils.bytes.utf8.encode(STAKE_ENTRY_SEED),
-                stakePoolId.toBuffer(),
-                originalMintId.toBuffer(),
-                anchor.web3.PublicKey.default.toBuffer(),
-            ],
-            STAKE_POOL_ADDRESS
-        );
+    // it("stake!", async () => {
+    //     let transaction = new Transaction();
+    //     const [stakeEntryId] = await anchor.web3.PublicKey.findProgramAddress(
+    //         [
+    //             anchor.utils.bytes.utf8.encode(STAKE_ENTRY_SEED),
+    //             stakePoolId.toBuffer(),
+    //             originalMintId.toBuffer(),
+    //             anchor.web3.PublicKey.default.toBuffer(),
+    //         ],
+    //         STAKE_POOL_ADDRESS
+    //     );
 
-        const stakeEntryData = await tryGetAccount(async () => {
-            const parsed = await stakeProgram.account.stakeEntry.fetch(stakeEntryId);
-            return {
-                parsed,
-                pubkey: stakeEntryId,
-            };
-        }
-        );
+    //     const stakeEntryData = await tryGetAccount(async () => {
+    //         const parsed = await stakeProgram.account.stakeEntry.fetch(stakeEntryId);
+    //         return {
+    //             parsed,
+    //             pubkey: stakeEntryId,
+    //         };
+    //     }
+    //     );
 
-        if (!stakeEntryData) {
-            originalMintMetadatId = await Metadata.getPDA(originalMintId);
-            transaction.add(
-                await stakeProgram.methods.initEntry(AlphaBeedevNetKeypair.publicKey).accounts({
-                    stakeEntry: stakeEntryId,
-                    stakePool: stakePoolId,
-                    originalMint: originalMintId,
-                    originalMintMetadata: originalMintMetadatId,
-                    payer: AlphaBeedevNetKeypair.publicKey,
-                }).signers([
-                    AlphaBeedevNetKeypair
-                ]).transaction()
-            );
-        }
+    //     if (!stakeEntryData) {
+    //         originalMintMetadatId = await Metadata.getPDA(originalMintId);
+    //         transaction.add(
+    //             await stakeProgram.methods.initEntry(AlphaBeedevNetKeypair.publicKey).accounts({
+    //                 stakeEntry: stakeEntryId,
+    //                 stakePool: stakePoolId,
+    //                 originalMint: originalMintId,
+    //                 originalMintMetadata: originalMintMetadatId,
+    //                 payer: AlphaBeedevNetKeypair.publicKey,
+    //             }).signers([
+    //                 AlphaBeedevNetKeypair
+    //             ]).transaction()
+    //         );
+    //     }
 
-        stakeEntryOriginalMintTokenAccountId = await getAssociatedTokenAddress(
-            originalMintId,
-            stakeEntryId,
-            true,
-            TOKEN_PROGRAM_ID,
-            ASSOCIATED_TOKEN_PROGRAM_ID,
-        );
+    //     stakeEntryOriginalMintTokenAccountId = await getAssociatedTokenAddress(
+    //         originalMintId,
+    //         stakeEntryId,
+    //         true,
+    //         TOKEN_PROGRAM_ID,
+    //         ASSOCIATED_TOKEN_PROGRAM_ID,
+    //     );
 
-        const account = await provider.connection.getAccountInfo(stakeEntryOriginalMintTokenAccountId);
-        if (!account) {
-            transaction.add(
-                createAssociatedTokenAccountInstruction(
-                    AlphaBeedevNetKeypair.publicKey,
-                    stakeEntryOriginalMintTokenAccountId,
-                    stakeEntryId,
-                    originalMintId,
-                    TOKEN_PROGRAM_ID,
-                    ASSOCIATED_TOKEN_PROGRAM_ID,
-                )
-            );
-        }
+    //     const account = await provider.connection.getAccountInfo(stakeEntryOriginalMintTokenAccountId);
+    //     if (!account) {
+    //         transaction.add(
+    //             createAssociatedTokenAccountInstruction(
+    //                 AlphaBeedevNetKeypair.publicKey,
+    //                 stakeEntryOriginalMintTokenAccountId,
+    //                 stakeEntryId,
+    //                 originalMintId,
+    //                 TOKEN_PROGRAM_ID,
+    //                 ASSOCIATED_TOKEN_PROGRAM_ID,
+    //             )
+    //         );
+    //     }
 
-        transaction.add(
-            await stakeProgram.methods.stake(new BN(1)).accounts({
-                stakeEntry: stakeEntryId,
-                stakePool: stakePoolId,
-                stakeEntryOriginalMintTokenAccount:
-                    stakeEntryOriginalMintTokenAccountId,
-                originalMint: originalMintId,
-                user: AlphaBeedevNetKeypair.publicKey,
-                userOriginalMintTokenAccount: originalMintTokenAccountId,
-                tokenProgram: TOKEN_PROGRAM_ID,
-            }).signers([
-                AlphaBeedevNetKeypair
-            ]).transaction()
-        );
-        ////////////// Reciepts (not working) /////////////////
-        /*
-        if (receiptType && receiptType !== ReceiptType.None) {
-            const receiptMintId = originalMintId;
-            if (!receiptMintId) {
-                throw new Error(
-                    "Stake entry has no stake mint. Initialize stake mint first."
-                );
-            }
-            if (
-                stakeEntryData?.parsed.stakeMintClaimed ||
-                stakeEntryData?.parsed.originalMintClaimed
-            ) {
-                throw new Error("Receipt has already been claimed.");
-            }
+    //     transaction.add(
+    //         await stakeProgram.methods.stake(new BN(1)).accounts({
+    //             stakeEntry: stakeEntryId,
+    //             stakePool: stakePoolId,
+    //             stakeEntryOriginalMintTokenAccount:
+    //                 stakeEntryOriginalMintTokenAccountId,
+    //             originalMint: originalMintId,
+    //             user: AlphaBeedevNetKeypair.publicKey,
+    //             userOriginalMintTokenAccount: originalMintTokenAccountId,
+    //             tokenProgram: TOKEN_PROGRAM_ID,
+    //         }).signers([
+    //             AlphaBeedevNetKeypair
+    //         ]).transaction()
+    //     );
 
-            if (
-                !stakeEntryData?.parsed ||
-                stakeEntryData.parsed.amount.toNumber() === 0
-            ) {
-                // Finds the token manager address for a given mint and mint counter
-                [tokenManagerId] = await PublicKey.findProgramAddress(
-                    [anchor.utils.bytes.utf8.encode(TOKEN_MANAGER_SEED), originalMintId.toBuffer()],
-                    TOKEN_MANAGER_ADDRESS
-                );
-                console.log("token manager address: ", tokenManagerId.toBase58());
+    //     try {
+    //         transaction.recentBlockhash = (
+    //             await provider.connection.getLatestBlockhash()
+    //         ).blockhash;
+    //         transaction.feePayer = AlphaBeedevNetKeypair.publicKey;
+    //         transaction.partialSign(AlphaBeedevNetKeypair);
+    //         // transaction = await provider.wallet.signTransaction(transaction)
+    //         const signature = await provider.connection.sendRawTransaction(
+    //             transaction.serialize()
+    //         );
+    //         const latestBlockHash = await provider.connection.getLatestBlockhash();
+    //         const confirmStrategy = {
+    //             blockhash: latestBlockHash.blockhash,
+    //             lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+    //             signature: signature,
+    //         };
+    //         await provider.connection.confirmTransaction(confirmStrategy);
+    //         // for (let index = 0; index < transactions.length; index++) {
+    //         //     let transaction = transactions[index];
+    //         //     if (transaction) {
+    //         //         let date = null
+    //         //         if (transaction.blockTime) {
+    //         //             date = new Date(transaction.blockTime * 1000);
 
-                let tokenManagerReceiptMintTokenAccountId = await getAssociatedTokenAddress(
-                    originalMintId,
-                    tokenManagerId,
-                    true,
-                    TOKEN_PROGRAM_ID,
-                    ASSOCIATED_TOKEN_PROGRAM_ID,
-                );
-                const account = await provider.connection.getAccountInfo(tokenManagerReceiptMintTokenAccountId);
-                if (!account) {
+    //         //         }
+    //         //         console.log(`Transaction No: ${index + 1}`);
+    //         //         let transactionResponse = await quickConnection.getTransaction(transaction.signature)
+    //         //         console.log(`Signature: ${transaction.signature}`);
+    //         //         console.log(`Response: ${JSON.stringify(transactionResponse?.transaction.message)}`);
+    //         //         console.log(`Time: ${date}`);
+    //         //         console.log(("-").repeat(20));
+    //         //     }
+    //         // }
 
-                    transaction.add(
-                        createAssociatedTokenAccountInstruction(
-                            AlphaBeedevNetKeypair.publicKey,
-                            tokenManagerReceiptMintTokenAccountId,
-                            tokenManagerId,
-                            originalMintId,
-                            TOKEN_PROGRAM_ID,
-                            ASSOCIATED_TOKEN_PROGRAM_ID,
-                        )
-                    );
-                }
+    //         //////////////////////////////////// PARSING THE TRANSACTION ///////////////////////////////
 
-                // Finds the mint counter id
-                [mintCounterId] = await PublicKey.findProgramAddress(
-                    [anchor.utils.bytes.utf8.encode(MINT_COUNTER_SEED), receiptMintId.toBuffer()],
-                    TOKEN_MANAGER_ADDRESS
-                );
-                console.log(mintCounterId.toBase58());
-                console.log(originalMintId.toBase58());
+    //         /*let transactionList = await quickConnection.getSignaturesForAddress(new PublicKey("3uxefCc5RpaeiTqPqfXL3LLJeepsvTwNhfP3xuu3TDjL"));
+    //         let signatureList = transactionList.map(transaction => transaction.signature);
+    //         let transactionDetails = await quickConnection.getParsedTransactions(signatureList, { maxSupportedTransactionVersion: 0 });
+    //         transactionList.forEach((transaction, i) => {
+    //             let date = null
+    //             const transactionLogMessages = transactionDetails[i]?.meta?.logMessages;
+    //             if (transaction.blockTime) {
+    //                 date = new Date(transaction.blockTime * 1000);
 
-                userReceiptMintTokenAccountId = await getAssociatedTokenAddress(
-                    originalMintId,
-                    AlphaBeedevNetKeypair.publicKey,
-                    true,
-                    TOKEN_PROGRAM_ID,
-                    ASSOCIATED_TOKEN_PROGRAM_ID,
-                );
+    //             }
+    //             console.log(`Transaction No: ${i + 1}`);
+    //             console.log(`Signature: ${transaction.signature}`);
+    //             console.log(`Time: ${date}`);
+    //             transactionLogMessages?.forEach((log, n) => {
+    //                 console.log(`---transaction log ${n + 1}: ${log}`);
+    //             })
+    //             console.log(("-").repeat(20));
+    //         })*/
 
-                transaction.add(
-                    await stakeProgram.methods.claimReceiptMint().accounts({
-                        stakeEntry: stakeEntryId,
-                        originalMint: originalMintId,
-                        receiptMint: receiptMintId,
-                        stakeEntryReceiptMintTokenAccount: stakeEntryOriginalMintTokenAccountId,
-                        user: AlphaBeedevNetKeypair.publicKey,
-                        userReceiptMintTokenAccount: userReceiptMintTokenAccountId,
-                        mintCounter: mintCounterId,
-                        tokenManager: tokenManagerId,
-                        tokenManagerReceiptMintTokenAccount: tokenManagerReceiptMintTokenAccountId,
-                        tokenProgram: TOKEN_PROGRAM_ID,
-                        tokenManagerProgram: TOKEN_MANAGER_ADDRESS,
-                        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-                    }).signers([
-                        AlphaBeedevNetKeypair
-                    ]).transaction()
-                );
-            }
-        }
-        */
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
 
-        try {
-            transaction.recentBlockhash = (
-                await provider.connection.getLatestBlockhash()
-            ).blockhash;
-            transaction.feePayer = AlphaBeedevNetKeypair.publicKey;
-            transaction.partialSign(AlphaBeedevNetKeypair);
-            // transaction = await provider.wallet.signTransaction(transaction)
-            const signature = await provider.connection.sendRawTransaction(
-                transaction.serialize()
-            );
-            const latestBlockHash = await provider.connection.getLatestBlockhash();
-            const confirmStrategy = {
-                blockhash: latestBlockHash.blockhash,
-                lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-                signature: signature,
-            };
-            await provider.connection.confirmTransaction(confirmStrategy);
-            // for (let index = 0; index < transactions.length; index++) {
-            //     let transaction = transactions[index];
-            //     if (transaction) {
-            //         let date = null
-            //         if (transaction.blockTime) {
-            //             date = new Date(transaction.blockTime * 1000);
+    // });
 
-            //         }
-            //         console.log(`Transaction No: ${index + 1}`);
-            //         let transactionResponse = await quickConnection.getTransaction(transaction.signature)
-            //         console.log(`Signature: ${transaction.signature}`);
-            //         console.log(`Response: ${JSON.stringify(transactionResponse?.transaction.message)}`);
-            //         console.log(`Time: ${date}`);
-            //         console.log(("-").repeat(20));
-            //     }
-            // }
+    // it("unstake!", async () => {
+    //     await new Promise(resolve => setTimeout(resolve, 5000));
+    //     let transaction = await createUnStakeTransaction(originalMintId, originalMintTokenAccountId, stakePoolId);
+    //     try {
+    //         transaction.recentBlockhash = (
+    //             await provider.connection.getLatestBlockhash()
+    //         ).blockhash;
+    //         transaction.feePayer = AlphaBeedevNetKeypair.publicKey;
+    //         transaction.partialSign(AlphaBeedevNetKeypair);
+    //         const signature = await provider.connection.sendRawTransaction(
+    //             transaction.serialize()
+    //         );
+    //         const latestBlockHash = await provider.connection.getLatestBlockhash();
+    //         const confirmStrategy = {
+    //             blockhash: latestBlockHash.blockhash,
+    //             lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+    //             signature: signature,
+    //         };
+    //         await provider.connection.confirmTransaction(confirmStrategy);
 
-            //////////////////////////////////// PARSING THE TRANSACTION ///////////////////////////////
+    //         // //   console.log(" ========== waiting for 30 seconds ========== ");
+    //         // await new Promise(resolve => setTimeout(resolve, 6000));
+    //         // transaction = new Transaction();
+    //         // transaction.add(
+    //         //     await stakeProgram.methods.unstake().accounts({
+    //         //         stakeEntry: stakeEntryId,
+    //         //         stakePool: stakePoolId,
+    //         //         stakeEntryOriginalMintTokenAccount: associatedAddress,
+    //         //         originalMint: originalMintId,
+    //         //         userOriginalMintTokenAccount: originalMintTokenAccountId,
+    //         //         user: AlphaBeedevNetKeypair.publicKey
+    //         //     }).signers([
+    //         //         AlphaBeedevNetKeypair
+    //         //     ]).transaction()
+    //         // );
+    //         // transaction.recentBlockhash = (
+    //         //     await provider.connection.getLatestBlockhash()
+    //         // ).blockhash;
+    //         // transaction.feePayer = AlphaBeedevNetKeypair.publicKey;
+    //         // transaction.partialSign(AlphaBeedevNetKeypair);
+    //         // const signature2 = await provider.connection.sendRawTransaction(
+    //         //     transaction.serialize()
+    //         // );
+    //         // const latestBlockHash2 = await provider.connection.getLatestBlockhash();
+    //         // const confirmStrategy2 = {
+    //         //     blockhash: latestBlockHash2.blockhash,
+    //         //     lastValidBlockHeight: latestBlockHash2.lastValidBlockHeight,
+    //         //     signature: signature2,
+    //         // };
+    //         // await provider.connection.confirmTransaction(confirmStrategy2);
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
+    // });
 
-            /*let transactionList = await quickConnection.getSignaturesForAddress(new PublicKey("3uxefCc5RpaeiTqPqfXL3LLJeepsvTwNhfP3xuu3TDjL"));
-            let signatureList = transactionList.map(transaction => transaction.signature);
-            let transactionDetails = await quickConnection.getParsedTransactions(signatureList, { maxSupportedTransactionVersion: 0 });
-            transactionList.forEach((transaction, i) => {
-                let date = null
-                const transactionLogMessages = transactionDetails[i]?.meta?.logMessages;
-                if (transaction.blockTime) {
-                    date = new Date(transaction.blockTime * 1000);
-
-                }
-                console.log(`Transaction No: ${i + 1}`);
-                console.log(`Signature: ${transaction.signature}`);
-                console.log(`Time: ${date}`);
-                transactionLogMessages?.forEach((log, n) => {
-                    console.log(`---transaction log ${n + 1}: ${log}`);
-                })
-                console.log(("-").repeat(20));
-            })*/
-
-        } catch (error) {
-            console.log(error);
-        }
-
-    });
-
-    it("unstake!", async () => {
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        let transaction = await createUnStakeTransaction(originalMintId, originalMintTokenAccountId, stakePoolId);
-        try {
-            transaction.recentBlockhash = (
-                await provider.connection.getLatestBlockhash()
-            ).blockhash;
-            transaction.feePayer = AlphaBeedevNetKeypair.publicKey;
-            transaction.partialSign(AlphaBeedevNetKeypair);
-            const signature = await provider.connection.sendRawTransaction(
-                transaction.serialize()
-            );
-            const latestBlockHash = await provider.connection.getLatestBlockhash();
-            const confirmStrategy = {
-                blockhash: latestBlockHash.blockhash,
-                lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-                signature: signature,
-            };
-            await provider.connection.confirmTransaction(confirmStrategy);
-
-            // //   console.log(" ========== waiting for 30 seconds ========== ");
-            // await new Promise(resolve => setTimeout(resolve, 6000));
-            // transaction = new Transaction();
-            // transaction.add(
-            //     await stakeProgram.methods.unstake().accounts({
-            //         stakeEntry: stakeEntryId,
-            //         stakePool: stakePoolId,
-            //         stakeEntryOriginalMintTokenAccount: associatedAddress,
-            //         originalMint: originalMintId,
-            //         userOriginalMintTokenAccount: originalMintTokenAccountId,
-            //         user: AlphaBeedevNetKeypair.publicKey
-            //     }).signers([
-            //         AlphaBeedevNetKeypair
-            //     ]).transaction()
-            // );
-            // transaction.recentBlockhash = (
-            //     await provider.connection.getLatestBlockhash()
-            // ).blockhash;
-            // transaction.feePayer = AlphaBeedevNetKeypair.publicKey;
-            // transaction.partialSign(AlphaBeedevNetKeypair);
-            // const signature2 = await provider.connection.sendRawTransaction(
-            //     transaction.serialize()
-            // );
-            // const latestBlockHash2 = await provider.connection.getLatestBlockhash();
-            // const confirmStrategy2 = {
-            //     blockhash: latestBlockHash2.blockhash,
-            //     lastValidBlockHeight: latestBlockHash2.lastValidBlockHeight,
-            //     signature: signature2,
-            // };
-            // await provider.connection.confirmTransaction(confirmStrategy2);
-        } catch (error) {
-            console.log(error);
-        }
-    });
-
-    it("update pool - add new collection", async () => {
+    /* it("update pool - add new collection", async () => {
         await stakeProgram.methods.updatePool({
             authority: new PublicKey(provider.wallet.publicKey),
             requiresCreators: [],
@@ -635,36 +553,141 @@ describe("testing-cardinal", () => {
         } catch (error) {
             console.log(error);
         }
-    });
+    });*/
 
-    it("fill stake pool with zeroes", async () => {
-        await stakeProgram.methods.stakePoolFillZeros().accounts({
-            stakePool: stakePoolId
-        }).rpc()
-        let stakePool = await stakeProgram.account.stakePool.fetch(stakePoolId);
-        console.log(stakePool);
+    /*it("fill stake pool with zeroes", async () => {
+         await stakeProgram.methods.stakePoolFillZeros().accounts({
+             stakePool: stakePoolId
+         }).rpc()
+         let stakePool = await stakeProgram.account.stakePool.fetch(stakePoolId);
+         console.log(stakePool);
+ 
+     })
+ 
+     it("close pool", async () => {
+         await stakeProgram.methods
+             .closeStakePool()
+             .accounts({
+                 stakePool: stakePoolId,
+                 authority: provider.wallet.publicKey
+             })
+             .signers([])
+             .rpc();
+     });
+ 
+     it("staking nft after pool is closed gives error", async () => {
+         let transaction = await createStakeTransaction(newCreatorOriginalMintId, newCreatorOriginalMintTokenAccountId, stakePoolId)
+         try {
+             transaction.recentBlockhash = (
+                 await provider.connection.getLatestBlockhash()
+             ).blockhash;
+             transaction.feePayer = AlphaBeedevNetKeypair.publicKey;
+             transaction.partialSign(AlphaBeedevNetKeypair);
+             const signature = await provider.connection.sendRawTransaction(
+                 transaction.serialize()
+             );
+             const latestBlockHash = await provider.connection.getLatestBlockhash();
+             const confirmStrategy = {
+                 blockhash: latestBlockHash.blockhash,
+                 lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+                 signature: signature,
+             };
+             await provider.connection.confirmTransaction(confirmStrategy);
+         } catch (error) {
+             console.log(error);
+         }
+     });*/
 
-    })
+    it("freeze stake original nft", async () => {
+        let transaction = new Transaction();
+        const [stakeEntryId] = await anchor.web3.PublicKey.findProgramAddress(
+            [
+                anchor.utils.bytes.utf8.encode(STAKE_ENTRY_SEED),
+                stakePoolId.toBuffer(),
+                originalMintId.toBuffer(),
+                anchor.web3.PublicKey.default.toBuffer(),
+            ],
+            STAKE_POOL_ADDRESS
+        );
+        console.log(stakeEntryId.toBase58());
 
-    it("close pool", async () => {
-        await stakeProgram.methods
-            .closeStakePool()
-            .accounts({
+
+        const stakeEntryData = await tryGetAccount(async () => {
+            const parsed = await stakeProgram.account.stakeEntry.fetch(stakeEntryId);
+            return {
+                parsed,
+                pubkey: stakeEntryId,
+            };
+        }
+        );
+
+        if (!stakeEntryData) {
+            originalMintMetadatId = await Metadata.getPDA(originalMintId);
+            transaction.add(
+                await stakeProgram.methods.initEntry(AlphaBeedevNetKeypair.publicKey).accounts({
+                    stakeEntry: stakeEntryId,
+                    stakePool: stakePoolId,
+                    originalMint: originalMintId,
+                    originalMintMetadata: originalMintMetadatId,
+                    payer: AlphaBeedevNetKeypair.publicKey,
+                }).signers([
+                    AlphaBeedevNetKeypair
+                ]).transaction()
+            );
+        }
+
+        stakeEntryOriginalMintTokenAccountId = await getAssociatedTokenAddress(
+            originalMintId,
+            stakeEntryId,
+            true,
+            TOKEN_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+        );
+
+        const account = await provider.connection.getAccountInfo(stakeEntryOriginalMintTokenAccountId);
+        if (!account) {
+            transaction.add(
+                createAssociatedTokenAccountInstruction(
+                    AlphaBeedevNetKeypair.publicKey,
+                    stakeEntryOriginalMintTokenAccountId,
+                    stakeEntryId,
+                    originalMintId,
+                    TOKEN_PROGRAM_ID,
+                    ASSOCIATED_TOKEN_PROGRAM_ID,
+                )
+            );
+        }
+        const masterEditionAddress = (await anchor.web3.PublicKey.findProgramAddress(
+            [
+                Buffer.from("metadata"),
+                new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").toBuffer(),
+                originalMintId.toBuffer(),
+                Buffer.from("edition"),
+            ],
+            new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s")
+        ))[0];
+        transaction.add(
+            await stakeProgram.methods.stakeFreeze(new BN(1)).accounts({
+                stakeEntry: stakeEntryId,
                 stakePool: stakePoolId,
-                authority: provider.wallet.publicKey
-            })
-            .signers([])
-            .rpc();
-    });
+                masterEdition: masterEditionAddress,
+                originalMint: originalMintId,
+                user: AlphaBeedevNetKeypair.publicKey,
+                userOriginalMintTokenAccount: originalMintTokenAccountId,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                tokenMetadataProgram: new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"),
+            }).signers([
+                AlphaBeedevNetKeypair
+            ]).transaction()
+        );
 
-    it("staking nft after pool is closed gives error", async () => {
-        let transaction = await createStakeTransaction(newCreatorOriginalMintId, newCreatorOriginalMintTokenAccountId, stakePoolId)
         try {
             transaction.recentBlockhash = (
                 await provider.connection.getLatestBlockhash()
             ).blockhash;
             transaction.feePayer = AlphaBeedevNetKeypair.publicKey;
             transaction.partialSign(AlphaBeedevNetKeypair);
+            // transaction = await provider.wallet.signTransaction(transaction)
             const signature = await provider.connection.sendRawTransaction(
                 transaction.serialize()
             );
@@ -675,6 +698,558 @@ describe("testing-cardinal", () => {
                 signature: signature,
             };
             await provider.connection.confirmTransaction(confirmStrategy);
+        } catch (error) {
+            console.log(error);
+        }
+    })
+
+    it("transfering frozen nft should give error", async () => {
+        let secondTokenAccount = await getOrCreateAssociatedTokenAccount(
+            provider.connection,
+            AlphaBeedevNetKeypair,
+            originalMintId,
+            provider.wallet.publicKey
+        )
+        try {
+            await transfer(
+                provider.connection,
+                AlphaBeedevNetKeypair,
+                originalMintTokenAccountId,
+                secondTokenAccount.address,
+                AlphaBeedevNetKeypair,
+                1,
+            );
+        } catch (error) {
+            console.log(error);
+
+        }
+    });
+
+    it("revoking frozen nft should give error", async () => {
+        try {
+            await revoke(
+                provider.connection,
+                AlphaBeedevNetKeypair,
+                originalMintTokenAccountId,
+                AlphaBeedevNetKeypair
+            );
+        } catch (error) {
+            console.log(error);
+
+        }
+    });
+
+    it("burning frozen nft should give error", async () => {
+        try {
+            await burnChecked(
+                provider.connection,
+                AlphaBeedevNetKeypair,
+                originalMintTokenAccountId,
+                originalMintId,
+                AlphaBeedevNetKeypair,
+                1,
+                0
+            )
+        } catch (error) {
+            console.log(error);
+        }
+    });
+
+    it("unfreeze originla nft with wrong token account should give error", async () => {
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        let transaction = new Transaction();
+        const [stakeEntryId] = await anchor.web3.PublicKey.findProgramAddress(
+            [
+                anchor.utils.bytes.utf8.encode(STAKE_ENTRY_SEED),
+                stakePoolId.toBuffer(),
+                originalMintId.toBuffer(),
+                anchor.web3.PublicKey.default.toBuffer(),
+            ],
+            STAKE_POOL_ADDRESS
+        );
+
+        const stakeEntryData = await tryGetAccount(async () => {
+            const parsed = await stakeProgram.account.stakeEntry.fetch(stakeEntryId);
+            return {
+                parsed,
+                pubkey: stakeEntryId,
+            };
+        }
+        );
+
+        if (!stakeEntryData) {
+            originalMintMetadatId = await Metadata.getPDA(originalMintId);
+            transaction.add(
+                await stakeProgram.methods.initEntry(AlphaBeedevNetKeypair.publicKey).accounts({
+                    stakeEntry: stakeEntryId,
+                    stakePool: stakePoolId,
+                    originalMint: originalMintId,
+                    originalMintMetadata: originalMintMetadatId,
+                    payer: AlphaBeedevNetKeypair.publicKey,
+                }).signers([
+                    AlphaBeedevNetKeypair
+                ]).transaction()
+            );
+        }
+        let secondTokenAccount = await getOrCreateAssociatedTokenAccount(
+            provider.connection,
+            AlphaBeedevNetKeypair,
+            originalMintId,
+            provider.wallet.publicKey
+        )
+
+        const masterEditionAddress = (await anchor.web3.PublicKey.findProgramAddress(
+            [
+                Buffer.from("metadata"),
+                new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").toBuffer(),
+                originalMintId.toBuffer(),
+                Buffer.from("edition"),
+            ],
+            new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s")
+        ))[0];
+        transaction.add(
+            await stakeProgram.methods.unstakeFreeze().accounts({
+                stakeEntry: stakeEntryId,
+                stakePool: stakePoolId,
+                masterEdition: masterEditionAddress,
+                originalMint: originalMintId,
+                user: AlphaBeedevNetKeypair.publicKey,
+                userOriginalMintTokenAccount: secondTokenAccount.address,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                tokenMetadataProgram: new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"),
+            }).signers([
+                AlphaBeedevNetKeypair
+            ]).transaction()
+        );
+
+        try {
+            transaction.recentBlockhash = (
+                await provider.connection.getLatestBlockhash()
+            ).blockhash;
+            transaction.feePayer = AlphaBeedevNetKeypair.publicKey;
+            transaction.partialSign(AlphaBeedevNetKeypair);
+            // transaction = await provider.wallet.signTransaction(transaction)
+            const signature = await provider.connection.sendRawTransaction(
+                transaction.serialize()
+            );
+            const latestBlockHash = await provider.connection.getLatestBlockhash();
+            const confirmStrategy = {
+                blockhash: latestBlockHash.blockhash,
+                lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+                signature: signature,
+            };
+            await provider.connection.confirmTransaction(confirmStrategy);
+        } catch (error) {
+            console.log(error);
+        }
+    })
+
+    it("unfreeze original nft", async () => {
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        let transaction = new Transaction();
+        const [stakeEntryId] = await anchor.web3.PublicKey.findProgramAddress(
+            [
+                anchor.utils.bytes.utf8.encode(STAKE_ENTRY_SEED),
+                stakePoolId.toBuffer(),
+                originalMintId.toBuffer(),
+                anchor.web3.PublicKey.default.toBuffer(),
+            ],
+            STAKE_POOL_ADDRESS
+        );
+
+        const stakeEntryData = await tryGetAccount(async () => {
+            const parsed = await stakeProgram.account.stakeEntry.fetch(stakeEntryId);
+            return {
+                parsed,
+                pubkey: stakeEntryId,
+            };
+        }
+        );
+
+        if (!stakeEntryData) {
+            originalMintMetadatId = await Metadata.getPDA(originalMintId);
+            transaction.add(
+                await stakeProgram.methods.initEntry(AlphaBeedevNetKeypair.publicKey).accounts({
+                    stakeEntry: stakeEntryId,
+                    stakePool: stakePoolId,
+                    originalMint: originalMintId,
+                    originalMintMetadata: originalMintMetadatId,
+                    payer: AlphaBeedevNetKeypair.publicKey,
+                }).signers([
+                    AlphaBeedevNetKeypair
+                ]).transaction()
+            );
+        }
+
+        stakeEntryOriginalMintTokenAccountId = await getAssociatedTokenAddress(
+            originalMintId,
+            stakeEntryId,
+            true,
+            TOKEN_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID,
+        );
+
+        const account = await provider.connection.getAccountInfo(stakeEntryOriginalMintTokenAccountId);
+        if (!account) {
+            transaction.add(
+                createAssociatedTokenAccountInstruction(
+                    AlphaBeedevNetKeypair.publicKey,
+                    stakeEntryOriginalMintTokenAccountId,
+                    stakeEntryId,
+                    originalMintId,
+                    TOKEN_PROGRAM_ID,
+                    ASSOCIATED_TOKEN_PROGRAM_ID,
+                )
+            );
+        }
+        const masterEditionAddress = (await anchor.web3.PublicKey.findProgramAddress(
+            [
+                Buffer.from("metadata"),
+                new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").toBuffer(),
+                originalMintId.toBuffer(),
+                Buffer.from("edition"),
+            ],
+            new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s")
+        ))[0];
+        transaction.add(
+            await stakeProgram.methods.unstakeFreeze().accounts({
+                stakeEntry: stakeEntryId,
+                stakePool: stakePoolId,
+                masterEdition: masterEditionAddress,
+                originalMint: originalMintId,
+                user: AlphaBeedevNetKeypair.publicKey,
+                userOriginalMintTokenAccount: originalMintTokenAccountId,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                tokenMetadataProgram: new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"),
+            }).signers([
+                AlphaBeedevNetKeypair
+            ]).transaction()
+        );
+
+        try {
+            transaction.recentBlockhash = (
+                await provider.connection.getLatestBlockhash()
+            ).blockhash;
+            transaction.feePayer = AlphaBeedevNetKeypair.publicKey;
+            transaction.partialSign(AlphaBeedevNetKeypair);
+            // transaction = await provider.wallet.signTransaction(transaction)
+            const signature = await provider.connection.sendRawTransaction(
+                transaction.serialize()
+            );
+            const latestBlockHash = await provider.connection.getLatestBlockhash();
+            const confirmStrategy = {
+                blockhash: latestBlockHash.blockhash,
+                lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+                signature: signature,
+            };
+            await provider.connection.confirmTransaction(confirmStrategy);
+        } catch (error) {
+            console.log(error);
+        }
+    });
+
+    it("transfering unfrozen nft should work", async () => {
+        let secondTokenAccount = await getOrCreateAssociatedTokenAccount(
+            provider.connection,
+            AlphaBeedevNetKeypair,
+            originalMintId,
+            provider.wallet.publicKey
+        )
+        try {
+            await transfer(
+                provider.connection,
+                AlphaBeedevNetKeypair,
+                originalMintTokenAccountId,
+                secondTokenAccount.address,
+                AlphaBeedevNetKeypair,
+                1,
+            );
+        } catch (error) {
+            console.log(error);
+        }
+    });
+
+    it("freezing unfrozen nft with wrong token account shoult give error", async () => {
+        const wallet = provider.wallet as anchor.Wallet;
+        let transaction = new Transaction();
+        const [stakeEntryId] = await anchor.web3.PublicKey.findProgramAddress(
+            [
+                anchor.utils.bytes.utf8.encode(STAKE_ENTRY_SEED),
+                stakePoolId.toBuffer(),
+                originalMintId.toBuffer(),
+                anchor.web3.PublicKey.default.toBuffer(),
+            ],
+            STAKE_POOL_ADDRESS
+        );
+
+        const stakeEntryData = await tryGetAccount(async () => {
+            const parsed = await stakeProgram.account.stakeEntry.fetch(stakeEntryId);
+            return {
+                parsed,
+                pubkey: stakeEntryId,
+            };
+        }
+        );
+
+        if (!stakeEntryData) {
+            originalMintMetadatId = await Metadata.getPDA(originalMintId);
+            transaction.add(
+                await stakeProgram.methods.initEntry(wallet.publicKey).accounts({
+                    stakeEntry: stakeEntryId,
+                    stakePool: stakePoolId,
+                    originalMint: originalMintId,
+                    originalMintMetadata: originalMintMetadatId,
+                    payer: wallet.publicKey,
+                }).signers([
+                    wallet.payer
+                ]).transaction()
+            );
+        }
+
+        const masterEditionAddress = (await anchor.web3.PublicKey.findProgramAddress(
+            [
+                Buffer.from("metadata"),
+                new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").toBuffer(),
+                originalMintId.toBuffer(),
+                Buffer.from("edition"),
+            ],
+            new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s")
+        ))[0];
+        transaction.add(
+            await stakeProgram.methods.stakeFreeze(new BN(1)).accounts({
+                stakeEntry: stakeEntryId,
+                stakePool: stakePoolId,
+                masterEdition: masterEditionAddress,
+                originalMint: originalMintId,
+                user: wallet.publicKey,
+                userOriginalMintTokenAccount: originalMintTokenAccountId,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                tokenMetadataProgram: new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"),
+            }).signers([
+                wallet.payer
+            ]).transaction()
+        );
+
+        try {
+            transaction.recentBlockhash = (
+                await provider.connection.getLatestBlockhash()
+            ).blockhash;
+            transaction.feePayer = wallet.publicKey;
+            transaction.partialSign(wallet.payer);
+            // transaction = await provider.wallet.signTransaction(transaction)
+            const signature = await provider.connection.sendRawTransaction(
+                transaction.serialize()
+            );
+            const latestBlockHash = await provider.connection.getLatestBlockhash();
+            const confirmStrategy = {
+                blockhash: latestBlockHash.blockhash,
+                lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+                signature: signature,
+            };
+            await provider.connection.confirmTransaction(confirmStrategy);
+        } catch (error) {
+            console.log(error);
+        }
+    })
+
+    it("freezing unfrozen nft should work", async () => {
+        const wallet = provider.wallet as anchor.Wallet;
+        let transaction = new Transaction();
+        const [stakeEntryId] = await anchor.web3.PublicKey.findProgramAddress(
+            [
+                anchor.utils.bytes.utf8.encode(STAKE_ENTRY_SEED),
+                stakePoolId.toBuffer(),
+                originalMintId.toBuffer(),
+                anchor.web3.PublicKey.default.toBuffer(),
+            ],
+            STAKE_POOL_ADDRESS
+        );
+
+        const stakeEntryData = await tryGetAccount(async () => {
+            const parsed = await stakeProgram.account.stakeEntry.fetch(stakeEntryId);
+            return {
+                parsed,
+                pubkey: stakeEntryId,
+            };
+        }
+        );
+
+        if (!stakeEntryData) {
+            originalMintMetadatId = await Metadata.getPDA(originalMintId);
+            transaction.add(
+                await stakeProgram.methods.initEntry(wallet.publicKey).accounts({
+                    stakeEntry: stakeEntryId,
+                    stakePool: stakePoolId,
+                    originalMint: originalMintId,
+                    originalMintMetadata: originalMintMetadatId,
+                    payer: wallet.publicKey,
+                }).signers([
+                    wallet.payer
+                ]).transaction()
+            );
+        }
+
+        let secondTokenAccount = await getOrCreateAssociatedTokenAccount(
+            provider.connection,
+            AlphaBeedevNetKeypair,
+            originalMintId,
+            provider.wallet.publicKey
+        )
+        const masterEditionAddress = (await anchor.web3.PublicKey.findProgramAddress(
+            [
+                Buffer.from("metadata"),
+                new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").toBuffer(),
+                originalMintId.toBuffer(),
+                Buffer.from("edition"),
+            ],
+            new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s")
+        ))[0];
+        transaction.add(
+            await stakeProgram.methods.stakeFreeze(new BN(1)).accounts({
+                stakeEntry: stakeEntryId,
+                stakePool: stakePoolId,
+                masterEdition: masterEditionAddress,
+                originalMint: originalMintId,
+                user: wallet.publicKey,
+                userOriginalMintTokenAccount: secondTokenAccount.address,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                tokenMetadataProgram: new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"),
+            }).signers([
+                wallet.payer
+            ]).transaction()
+        );
+
+        try {
+            transaction.recentBlockhash = (
+                await provider.connection.getLatestBlockhash()
+            ).blockhash;
+            transaction.feePayer = wallet.publicKey;
+            transaction.partialSign(wallet.payer);
+            // transaction = await provider.wallet.signTransaction(transaction)
+            const signature = await provider.connection.sendRawTransaction(
+                transaction.serialize()
+            );
+            const latestBlockHash = await provider.connection.getLatestBlockhash();
+            const confirmStrategy = {
+                blockhash: latestBlockHash.blockhash,
+                lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+                signature: signature,
+            };
+            await provider.connection.confirmTransaction(confirmStrategy);
+        } catch (error) {
+            console.log(error);
+        }
+    });
+
+    it("unfreeze original nft after it got frozen again should work", async () => {
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        const wallet = provider.wallet as anchor.Wallet;
+        let transaction = new Transaction();
+        const [stakeEntryId] = await anchor.web3.PublicKey.findProgramAddress(
+            [
+                anchor.utils.bytes.utf8.encode(STAKE_ENTRY_SEED),
+                stakePoolId.toBuffer(),
+                originalMintId.toBuffer(),
+                anchor.web3.PublicKey.default.toBuffer(),
+            ],
+            STAKE_POOL_ADDRESS
+        );
+
+        const stakeEntryData = await tryGetAccount(async () => {
+            const parsed = await stakeProgram.account.stakeEntry.fetch(stakeEntryId);
+            return {
+                parsed,
+                pubkey: stakeEntryId,
+            };
+        }
+        );
+
+        if (!stakeEntryData) {
+            originalMintMetadatId = await Metadata.getPDA(originalMintId);
+            transaction.add(
+                await stakeProgram.methods.initEntry(wallet.publicKey).accounts({
+                    stakeEntry: stakeEntryId,
+                    stakePool: stakePoolId,
+                    originalMint: originalMintId,
+                    originalMintMetadata: originalMintMetadatId,
+                    payer: wallet.publicKey,
+                }).signers([
+                    wallet.payer
+                ]).transaction()
+            );
+        }
+
+        let secondTokenAccount = await getOrCreateAssociatedTokenAccount(
+            provider.connection,
+            AlphaBeedevNetKeypair,
+            originalMintId,
+            provider.wallet.publicKey
+        )
+
+        const masterEditionAddress = (await anchor.web3.PublicKey.findProgramAddress(
+            [
+                Buffer.from("metadata"),
+                new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s").toBuffer(),
+                originalMintId.toBuffer(),
+                Buffer.from("edition"),
+            ],
+            new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s")
+        ))[0];
+        transaction.add(
+            await stakeProgram.methods.unstakeFreeze().accounts({
+                stakeEntry: stakeEntryId,
+                stakePool: stakePoolId,
+                masterEdition: masterEditionAddress,
+                originalMint: originalMintId,
+                user: wallet.publicKey,
+                userOriginalMintTokenAccount: secondTokenAccount.address,
+                tokenProgram: TOKEN_PROGRAM_ID,
+                tokenMetadataProgram: new PublicKey("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"),
+            }).signers([
+                wallet.payer
+            ]).transaction()
+        );
+
+        try {
+            transaction.recentBlockhash = (
+                await provider.connection.getLatestBlockhash()
+            ).blockhash;
+            transaction.feePayer = wallet.publicKey;
+            transaction.partialSign(wallet.payer);
+            // transaction = await provider.wallet.signTransaction(transaction)
+            const signature = await provider.connection.sendRawTransaction(
+                transaction.serialize()
+            );
+            const latestBlockHash = await provider.connection.getLatestBlockhash();
+            const confirmStrategy = {
+                blockhash: latestBlockHash.blockhash,
+                lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+                signature: signature,
+            };
+            await provider.connection.confirmTransaction(confirmStrategy);
+        } catch (error) {
+            console.log(error);
+        }
+    });
+
+    it("burning unfrozen nft should work", async () => {
+        try {
+            let secondTokenAccount = await getOrCreateAssociatedTokenAccount(
+                provider.connection,
+                AlphaBeedevNetKeypair,
+                originalMintId,
+                provider.wallet.publicKey
+            );
+            const wallet = provider.wallet as anchor.Wallet;
+            await burnChecked(
+                provider.connection,
+                AlphaBeedevNetKeypair,
+                secondTokenAccount.address,
+                originalMintId,
+                wallet.payer,
+                1,
+                0
+            )
         } catch (error) {
             console.log(error);
         }

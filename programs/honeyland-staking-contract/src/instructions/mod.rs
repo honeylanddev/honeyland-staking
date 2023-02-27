@@ -11,6 +11,8 @@ pub mod stake_pool_fill_zeros;
 pub mod unstake;
 pub mod update_pool;
 pub mod update_total_stake_seconds;
+pub mod stake_freeze;
+pub mod unstake_freeze;
 
 pub use authorize_mint::*;
 pub use close_stake_entry::*;
@@ -25,3 +27,5 @@ pub use stake_pool_fill_zeros::*;
 pub use unstake::*;
 pub use update_pool::*;
 pub use update_total_stake_seconds::*;
+pub use stake_freeze::*;
+pub use unstake_freeze::*;
