@@ -6,3 +6,4 @@ target
 node_modules
 test-ledger
 oz_wallet.json
+Anchor.toml
